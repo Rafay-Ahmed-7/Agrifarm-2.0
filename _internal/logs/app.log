@@ -1,0 +1,2 @@
+2026-06-05 00:46:40 - ERROR - crop_manager - get_dashboard_metrics error: no such table: fields
+2026-06-05 00:46:40 - ERROR - crop_manager - get_upcoming_activities error: no such table: crops

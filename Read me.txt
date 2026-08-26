@@ -1,0 +1,179 @@
+AgriFarm
+========
+
+AgriFarm is a Windows desktop farm-management application for keeping track of
+fields, cultivated crops, harvest dates, and agricultural stock. It provides a
+single local interface for day-to-day farm records without requiring a hosted
+server, database account, or internet connection.
+
+This folder is a packaged, ready-to-run Windows distribution. The application
+is launched through AgriFarm.exe and includes its Python runtime, CustomTkinter
+UI resources, SQLite support, and other required libraries in the _internal
+folder.
+
+
+What the application does
+-------------------------
+
+The application is organised into four main views. Each view reads from and
+writes to the local SQLite database, and refreshes its tables after successful
+changes.
+
+1. Farm Dashboard
+
+The dashboard gives a quick operational overview:
+
+* Total cultivated fields.
+* Active crops.
+* Low-inventory alerts. Items below 10 units are treated as low stock.
+* Upcoming harvests and deadlines in the next 30 days.
+* A table showing crop, variety, field, expected harvest date, and current
+	growth stage.
+
+If the database cannot be reached, the dashboard displays dashes for its
+metrics and shows a database connection message instead of silently showing
+incorrect values.
+
+2. Crop Tracker
+
+The Crop Tracker is split into a Fields panel and a Cultivated Crops panel.
+
+Fields can be:
+
+* Added with a name, area in acres, soil type, and status.
+* Edited by selecting a row and saving changes.
+* Deleted after confirmation.
+* Assigned one of three statuses: Active, Fallow, or Resting.
+
+Crops can be:
+
+* Added with a crop name, variety, field location, planting date, expected
+	harvest date, and growth stage.
+* Edited by selecting a crop row and saving changes.
+* Deleted after confirmation.
+* Assigned one of these stages: Seedling, Vegetative, Flowering,
+	Harvest-Ready, or Harvested.
+
+Dates must use YYYY-MM-DD. The application checks that required values are
+present, that field area is a positive number, and that an expected harvest
+date is not earlier than the planting date. A crop must be linked to an
+existing field, so fields should be created before crops are recorded.
+
+Deleting a field also deletes all crops planted in that field, and the
+application asks for confirmation before doing so.
+
+3. Stock Inventory
+
+The inventory view maintains farm supplies and stock movements.
+
+* View item name, category, quantity, unit of measure, and last-updated time.
+* Register new items with an initial quantity.
+* Use Quick Stock Adjustment to add or subtract a positive amount.
+* Delete a selected item after confirmation.
+* Choose categories from Seeds, Fertilizer, Pesticide, or Tools.
+* Highlight quantities below 10 in the inventory table.
+
+The application accepts decimal quantities, which supports units such as
+kilograms and litres as well as whole-unit items. It does not convert between
+units, so each item should be managed consistently using its own unit of
+measure.
+
+4. Settings
+
+Settings contains database diagnostics and appearance controls.
+
+Database controls:
+
+* Display the path to the local database file.
+* Test whether the SQLite database is accessible.
+* Show the current database connection status and file size.
+* Re-initialise the database schema and seed sample data if the database is
+	empty. The operation uses safe table creation and is intended for recovery
+	and diagnostics.
+
+Appearance controls:
+
+* Switch between Dark Mode and Light Mode.
+* Save the selected theme preference for later launches.
+
+
+How to run AgriFarm
+-------------------
+
+1. If you received a ZIP archive, right-click it and select Extract All.
+2. Open the extracted AgriFarm folder.
+3. Keep AgriFarm.exe and the _internal folder together. The executable depends
+	 on the files in _internal.
+4. Double-click AgriFarm.exe.
+
+No Python installation, database server, credentials, or internet connection
+is required for the packaged build.
+
+
+Data storage and recovery
+-------------------------
+
+The application stores its data in:
+
+		_internal/farm_db.sqlite
+
+This is a local SQLite file. Back it up while AgriFarm is closed if you need
+to transfer or preserve farm records. Do not delete or rename it unless you
+intend to restore a backup or re-create the database.
+
+If a view reports missing tables or the dashboard cannot load its metrics:
+
+1. Open Settings.
+2. Use Test Connection to check the database.
+3. Use Re-initialise DB to verify/create the schema and seed data when empty.
+4. Return to the other views; they are refreshed after successful
+	 re-initialisation.
+
+Application diagnostics are written to:
+
+		_internal/logs/app.log
+
+The log is useful when a database operation fails. Existing packaged logs may
+contain errors from an earlier database state, so use the live status in
+Settings to confirm the current condition.
+
+
+Application design and bundled structure
+----------------------------------------
+
+AgriFarm is implemented as a CustomTkinter desktop interface with reusable
+table and modal-dialog widgets. The source modules included with the package
+are organised as follows:
+
+* _internal/views/dashboard.py - dashboard metrics and upcoming activities.
+* _internal/views/crop_tracker.py - field and crop forms plus CRUD actions.
+* _internal/views/inventory.py - inventory table and stock actions.
+* _internal/views/settings.py - SQLite diagnostics and theme selection.
+* _internal/widgets/table.py - scrollable tables, row selection, formatting,
+	alternating row colors, and low-stock highlighting.
+* _internal/widgets/modal.py - information, error, and confirmation dialogs.
+* _internal/farm_db.sqlite - local application data.
+* _internal/logs/app.log - runtime and database diagnostics.
+
+The _internal directory also contains the bundled Python 3.14 runtime, Tk/Tcl
+files, SQLite binaries, CustomTkinter assets, YAML support, and Windows
+runtime libraries. These files are deployment dependencies rather than files
+that should normally be edited by an end user.
+
+
+Known operational notes
+-----------------------
+
+* This distribution is designed for Windows and is launched through the EXE.
+* There is no user authentication or multi-user synchronization layer.
+* Records are stored locally on the computer where the application runs.
+* Inventory alerts use a fixed threshold of 10.0; the current interface does
+	not expose that threshold as a setting.
+* The dashboard focuses on records due within 30 days and does not provide a
+	separate calendar or reporting/export feature.
+
+
+Credits
+-------
+
+Developed and designed by Rafay Ahmed.
