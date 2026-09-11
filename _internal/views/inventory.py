@@ -372,6 +372,8 @@ class InventoryView(ctk.CTkFrame):
                     text_color=theme.dual("text_secondary"),
                     border_color=theme.dual("border_subtle")
                 )
+        self._apply_category_and_search()
+
     def _on_search_typed(self, event=None):
         if hasattr(self, "_search_timer") and self._search_timer:
             self.after_cancel(self._search_timer)
