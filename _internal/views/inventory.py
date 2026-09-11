@@ -372,7 +372,12 @@ class InventoryView(ctk.CTkFrame):
                     text_color=theme.dual("text_secondary"),
                     border_color=theme.dual("border_subtle")
                 )
-        self._apply_category_and_search()
+        # If data hasn't been loaded yet (background warm failed silently),
+        # refresh first so inventory_list is populated before filtering.
+        if not self.inventory_list:
+            self.refresh()
+        else:
+            self._apply_category_and_search()
 
     def _on_search_typed(self, event=None):
         if hasattr(self, "_search_timer") and self._search_timer:

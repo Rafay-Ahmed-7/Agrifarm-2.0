@@ -381,12 +381,14 @@ class AgriFarmApp(ctk.CTk):
                     font=theme.font_body(size=13, weight="normal")
                 )
 
-        # Only refresh if marked dirty by a mutation
-        if getattr(view, "_is_dirty", False):
-            refresh = getattr(view, "refresh", None)
-            if refresh:
+        # Always refresh on navigation so data is current when user lands on the view.
+        refresh = getattr(view, "refresh", None)
+        if refresh:
+            try:
                 refresh()
-            view._is_dirty = False
+            except Exception:
+                pass
+        view._is_dirty = False
 
     def refresh_all_views(self, force: bool = True, affected_views: set | None = None):
         """Refreshes the active view immediately; marks only affected inactive views dirty.
