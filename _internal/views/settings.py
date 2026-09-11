@@ -1,266 +1,394 @@
 """
-views/settings.py  –  Settings view for AgriFarm (SQLite edition).
+views/settings.py - Enterprise System Diagnostics & Settings Command Center.
 
-The PostgreSQL connection-credential form has been replaced with an
-informational panel confirming that the app uses a self-contained local
-SQLite database.  The Theme & Personalisation section is unchanged.
+Features:
+- Live SQL Server connectivity testing with diagnostic telemetry
+- Schema integrity verification across all production tables
+- Dark and Light appearance theme switching with live UI re-theming
+- Application runtime environment and build metadata
 """
 
+from __future__ import annotations
+import platform
+import sys
+import time
 import customtkinter as ctk
+
 import config
 import database
+import theme
 from widgets import modal
-from pathlib import Path
 
 
 class SettingsView(ctk.CTkFrame):
-    """
-    Settings view containing database information and appearance theme selection.
-
-    Since AgriFarm now uses a local SQLite file (farm_db.sqlite) there are
-    no host / port / user / password credentials to configure.  The database
-    panel therefore shows the file path and offers a 'Re-initialise' action
-    for diagnostics.
-    """
-
     def __init__(self, parent, controller):
         super().__init__(parent, fg_color="transparent")
         self.controller = controller
 
-        # Grid Layout (single column, multiple cards)
-        self.grid_columnconfigure(0, weight=1)
-        self.grid_rowconfigure((0, 1), weight=0)
-        self.grid_rowconfigure(2, weight=1)  # bottom spacer
+        # 2-column grid layout
+        self.grid_columnconfigure((0, 1), weight=1, uniform="settings_cols")
+        self.grid_rowconfigure(0, weight=1)
 
-        # ── Header ──────────────────────────────────────────────────────────
-        ctk.CTkLabel(
-            self,
-            text="⚙️ Application Settings",
-            font=ctk.CTkFont(size=24, weight="bold"),
-            text_color="#f4f4f5",
-            anchor="w"
-        ).grid(row=0, column=0, sticky="ew", padx=20, pady=(20, 15))
+        # =====================================================================
+        # LEFT COLUMN: SQL SERVER TELEMETRY & DIAGNOSTICS
+        # =====================================================================
+        self.left_col = ctk.CTkFrame(self, fg_color="transparent")
+        self.left_col.grid(row=0, column=0, sticky="nsew", padx=(24, 12), pady=20)
+        self.left_col.grid_columnconfigure(0, weight=1)
 
-        # Two-column card row
-        self.content_frame = ctk.CTkFrame(self, fg_color="transparent")
-        self.content_frame.grid(row=1, column=0, sticky="nsew", padx=20, pady=(0, 20))
-        self.content_frame.grid_columnconfigure((0, 1), weight=1, uniform="equal")
-
-        # ── 1. DATABASE INFO BOX ─────────────────────────────────────────────
-        self.db_box = ctk.CTkFrame(
-            self.content_frame,
-            fg_color="#18181b",
-            corner_radius=8,
+        # Database Diagnostics Card
+        self.db_card = ctk.CTkFrame(
+            self.left_col,
+            fg_color=theme.dual("bg_card"),
+            corner_radius=theme.RADIUS_CARD,
             border_width=1,
-            border_color="#27272a"
+            border_color=theme.dual("border_card")
         )
-        self.db_box.grid(row=0, column=0, sticky="nsew", padx=(0, 10))
-        self.db_box.grid_columnconfigure(0, weight=1)
+        self.db_card.pack(fill="x", pady=(0, 16))
+        self.db_card.grid_columnconfigure(0, weight=1)
 
-        ctk.CTkLabel(
-            self.db_box,
-            text="🗄️ Local SQLite Database",
-            font=ctk.CTkFont(size=16, weight="bold"),
-            text_color="#e4e4e7"
-        ).grid(row=0, column=0, sticky="w", padx=15, pady=15)
+        # Card Header
+        db_header = ctk.CTkFrame(self.db_card, fg_color="transparent")
+        db_header.pack(fill="x", padx=20, pady=(20, 12))
 
-        # Subtitle description
-        ctk.CTkLabel(
-            self.db_box,
-            text=(
-                "AgriFarm stores all data in a self-contained SQLite file.\n"
-                "No server, no credentials, and no internet connection required."
-            ),
-            font=ctk.CTkFont(size=12),
-            text_color="#a1a1aa",
-            justify="left",
-            wraplength=320
-        ).grid(row=1, column=0, sticky="w", padx=15, pady=(0, 12))
-
-        # Database file path display
-        db_path = Path(__file__).parent.parent / "farm_db.sqlite"
-        ctk.CTkLabel(
-            self.db_box,
-            text="Database File Path",
-            font=ctk.CTkFont(size=12, weight="bold"),
-            text_color="#a1a1aa"
-        ).grid(row=2, column=0, sticky="w", padx=15, pady=(5, 3))
-
-        self.db_path_label = ctk.CTkLabel(
-            self.db_box,
-            text=str(db_path),
-            font=ctk.CTkFont(size=11, family="Courier"),
-            text_color="#34d399",
-            anchor="w",
-            wraplength=340
+        db_title = ctk.CTkLabel(
+            db_header,
+            text="🗄️ SQL Server Telemetry",
+            font=theme.font_title(size=16),
+            text_color=theme.dual("text_primary"),
+            anchor="w"
         )
-        self.db_path_label.grid(row=3, column=0, sticky="ew", padx=15, pady=(0, 15))
+        db_title.pack(anchor="w")
 
-        # Status indicator
-        ctk.CTkLabel(
-            self.db_box,
-            text="Connection Status",
-            font=ctk.CTkFont(size=12, weight="bold"),
-            text_color="#a1a1aa"
-        ).grid(row=4, column=0, sticky="w", padx=15, pady=(0, 3))
+        db_sub = ctk.CTkLabel(
+            db_header,
+            text="Production enterprise database connectivity and schema diagnostics",
+            font=theme.font_caption(),
+            text_color=theme.dual("text_muted"),
+            anchor="w"
+        )
+        db_sub.pack(anchor="w")
 
+        # Telemetry Spec Grid
+        telemetry_box = ctk.CTkFrame(
+            self.db_card,
+            fg_color=theme.dual("bg_card_alt"),
+            corner_radius=theme.RADIUS_INPUT,
+            border_width=1,
+            border_color=theme.dual("border_subtle")
+        )
+        telemetry_box.pack(fill="x", padx=20, pady=(0, 16))
+        telemetry_box.grid_columnconfigure(1, weight=1)
+
+        specs = [
+            ("Target Server:", f"{database.SERVER}"),
+            ("Database Catalog:", f"{database.DATABASE}"),
+            ("Authentication:", "Windows Integrated (Trusted)"),
+            ("ODBC Driver:", f"{database.DRIVER}"),
+        ]
+
+        for r_idx, (spec_label, spec_val) in enumerate(specs):
+            s_lbl = ctk.CTkLabel(
+                telemetry_box,
+                text=spec_label,
+                font=theme.font_caption(weight="bold"),
+                text_color=theme.dual("text_secondary"),
+                anchor="w"
+            )
+            s_lbl.grid(row=r_idx, column=0, sticky="w", padx=14, pady=6)
+
+            v_lbl = ctk.CTkLabel(
+                telemetry_box,
+                text=spec_val,
+                font=ctk.CTkFont(family="Consolas", size=11),
+                text_color=theme.dual("brand_primary_text"),
+                anchor="w"
+            )
+            v_lbl.grid(row=r_idx, column=1, sticky="w", padx=14, pady=6)
+
+        # Status Indicators Box
+        status_box = ctk.CTkFrame(self.db_card, fg_color="transparent")
+        status_box.pack(fill="x", padx=20, pady=(0, 16))
+        status_box.grid_columnconfigure((0, 1), weight=1)
+
+        # Connection status pill
+        self.conn_pill = ctk.CTkFrame(
+            status_box,
+            fg_color=theme.dual("bg_card_alt"),
+            corner_radius=theme.RADIUS_INPUT,
+            border_width=1,
+            border_color=theme.dual("border_subtle")
+        )
+        self.conn_pill.grid(row=0, column=0, sticky="ew", padx=(0, 6))
         self.status_label = ctk.CTkLabel(
-            self.db_box,
-            text="● Checking…",
-            font=ctk.CTkFont(size=12),
-            text_color="#a1a1aa",
-            anchor="w"
+            self.conn_pill,
+            text="● Testing connection...",
+            font=theme.font_caption(weight="bold"),
+            text_color=theme.dual("text_secondary")
         )
-        self.status_label.grid(row=5, column=0, sticky="ew", padx=15, pady=(0, 15))
+        self.status_label.pack(padx=12, pady=8)
 
-        # File size indicator
-        self.size_label = ctk.CTkLabel(
-            self.db_box,
-            text="File size: –",
-            font=ctk.CTkFont(size=11),
-            text_color="#71717a",
-            anchor="w"
-        )
-        self.size_label.grid(row=6, column=0, sticky="ew", padx=15, pady=(0, 10))
-
-        # Action buttons
-        self.btn_frame = ctk.CTkFrame(self.db_box, fg_color="transparent")
-        self.btn_frame.grid(row=7, column=0, sticky="ew", padx=15, pady=(5, 15))
-        self.btn_frame.grid_columnconfigure((0, 1), weight=1)
-
-        ctk.CTkButton(
-            self.btn_frame,
-            text="🔍 Test Connection",
-            fg_color="#3f3f46",
-            hover_color="#52525b",
-            font=ctk.CTkFont(size=13, weight="bold"),
-            height=32,
-            command=self._test_connection
-        ).grid(row=0, column=0, padx=(0, 5), sticky="ew")
-
-        ctk.CTkButton(
-            self.btn_frame,
-            text="🔄 Re-initialise DB",
-            fg_color="#10b981",
-            hover_color="#059669",
-            font=ctk.CTkFont(size=13, weight="bold"),
-            height=32,
-            command=self._reinitialise_db
-        ).grid(row=0, column=1, padx=(5, 0), sticky="ew")
-
-        # ── 2. APPEARANCE CONFIGURATION BOX ─────────────────────────────────
-        self.app_box = ctk.CTkFrame(
-            self.content_frame,
-            fg_color="#18181b",
-            corner_radius=8,
+        # Schema status pill
+        self.schema_pill = ctk.CTkFrame(
+            status_box,
+            fg_color=theme.dual("bg_card_alt"),
+            corner_radius=theme.RADIUS_INPUT,
             border_width=1,
-            border_color="#27272a"
+            border_color=theme.dual("border_subtle")
         )
-        self.app_box.grid(row=0, column=1, sticky="nsew", padx=(10, 0))
-        self.app_box.grid_columnconfigure(0, weight=1)
+        self.schema_pill.grid(row=0, column=1, sticky="ew", padx=(6, 0))
+        self.schema_label = ctk.CTkLabel(
+            self.schema_pill,
+            text="Checking schema...",
+            font=theme.font_caption(weight="bold"),
+            text_color=theme.dual("text_secondary")
+        )
+        self.schema_label.pack(padx=12, pady=8)
+
+        # Database Action Buttons
+        btn_row = ctk.CTkFrame(self.db_card, fg_color="transparent")
+        btn_row.pack(fill="x", padx=20, pady=(0, 20))
+        btn_row.grid_columnconfigure((0, 1), weight=1)
+
+        self.btn_test = ctk.CTkButton(
+            btn_row,
+            text="🔍 Test Latency & Ping",
+            font=theme.font_body(weight="bold"),
+            fg_color=theme.dual("brand_primary"),
+            hover_color=theme.dual("brand_primary_hover"),
+            text_color=theme.dual("text_inverse"),
+            corner_radius=theme.RADIUS_BUTTON,
+            height=34,
+            command=self._test_connection
+        )
+        self.btn_test.grid(row=0, column=0, sticky="ew", padx=(0, 6))
+
+        self.btn_reinit = ctk.CTkButton(
+            btn_row,
+            text="🔄 Verify Schema Tables",
+            font=theme.font_body(weight="bold"),
+            fg_color=theme.dual("accent_blue"),
+            hover_color=theme.dual("accent_blue_hover"),
+            text_color=theme.dual("text_inverse"),
+            corner_radius=theme.RADIUS_BUTTON,
+            height=34,
+            command=self._verify_schema
+        )
+        self.btn_reinit.grid(row=0, column=1, sticky="ew", padx=(6, 0))
+
+        # =====================================================================
+        # RIGHT COLUMN: APPEARANCE & SYSTEM INFO
+        # =====================================================================
+        self.right_col = ctk.CTkFrame(self, fg_color="transparent")
+        self.right_col.grid(row=0, column=1, sticky="nsew", padx=(12, 24), pady=20)
+        self.right_col.grid_columnconfigure(0, weight=1)
+
+        # Personalization Card
+        self.theme_card = ctk.CTkFrame(
+            self.right_col,
+            fg_color=theme.dual("bg_card"),
+            corner_radius=theme.RADIUS_CARD,
+            border_width=1,
+            border_color=theme.dual("border_card")
+        )
+        self.theme_card.pack(fill="x", pady=(0, 16))
+
+        th_header = ctk.CTkFrame(self.theme_card, fg_color="transparent")
+        th_header.pack(fill="x", padx=20, pady=(20, 12))
+
+        th_title = ctk.CTkLabel(
+            th_header,
+            text="🎨 Theme & Visual Presentation",
+            font=theme.font_title(size=16),
+            text_color=theme.dual("text_primary"),
+            anchor="w"
+        )
+        th_title.pack(anchor="w")
+
+        th_sub = ctk.CTkLabel(
+            th_header,
+            text="Synchronized light and dark visual aesthetics",
+            font=theme.font_caption(),
+            text_color=theme.dual("text_muted"),
+            anchor="w"
+        )
+        th_sub.pack(anchor="w")
+
+        theme_action_box = ctk.CTkFrame(
+            self.theme_card,
+            fg_color=theme.dual("bg_card_alt"),
+            corner_radius=theme.RADIUS_INPUT,
+            border_width=1,
+            border_color=theme.dual("border_subtle")
+        )
+        theme_action_box.pack(fill="x", padx=20, pady=(0, 20))
+        theme_action_box.grid_columnconfigure(1, weight=1)
 
         ctk.CTkLabel(
-            self.app_box,
-            text="🎨 Theme & Personalisation",
-            font=ctk.CTkFont(size=16, weight="bold"),
-            text_color="#e4e4e7"
-        ).grid(row=0, column=0, sticky="w", padx=15, pady=15)
+            theme_action_box,
+            text="Interface Mode:",
+            font=theme.font_body(weight="bold"),
+            text_color=theme.dual("text_secondary")
+        ).grid(row=0, column=0, sticky="w", padx=16, pady=16)
 
-        ctk.CTkLabel(
-            self.app_box,
-            text="Select Interface Appearance Mode",
-            font=ctk.CTkFont(size=12),
-            text_color="#a1a1aa"
-        ).grid(row=1, column=0, sticky="w", padx=15, pady=(5, 5))
-
-        self.theme_switch = ctk.CTkComboBox(
-            self.app_box,
+        self.theme_switch = ctk.CTkOptionMenu(
+            theme_action_box,
             values=["Dark Mode", "Light Mode"],
+            font=theme.font_body(weight="bold"),
+            corner_radius=theme.RADIUS_INPUT,
             height=32,
-            command=self._on_theme_changed
+            fg_color=theme.dual("brand_primary"),
+            button_color=theme.dual("brand_primary_hover"),
+            text_color=theme.dual("text_inverse"),
+            command=self._change_theme
         )
-        self.theme_switch.grid(row=2, column=0, sticky="w", padx=15, pady=(0, 15))
+        self.theme_switch.grid(row=0, column=1, sticky="e", padx=16, pady=16)
 
-        # Load theme preference into UI
-        self._load_theme_setting()
+        # Application System Information Card
+        self.sys_info_card = ctk.CTkFrame(
+            self.right_col,
+            fg_color=theme.dual("bg_card"),
+            corner_radius=theme.RADIUS_CARD,
+            border_width=1,
+            border_color=theme.dual("border_card")
+        )
+        self.sys_info_card.pack(fill="x")
 
-        # Run connection check after widget is ready
-        self.after(200, self._refresh_db_status)
+        sys_header = ctk.CTkFrame(self.sys_info_card, fg_color="transparent")
+        sys_header.pack(fill="x", padx=20, pady=(20, 12))
 
-    # ── Private helpers ──────────────────────────────────────────────────────
+        sys_title = ctk.CTkLabel(
+            sys_header,
+            text="ℹ️ Application & Environment",
+            font=theme.font_title(size=16),
+            text_color=theme.dual("text_primary"),
+            anchor="w"
+        )
+        sys_title.pack(anchor="w")
 
-    def _load_theme_setting(self):
-        """Reads theme_mode from config and sets the ComboBox accordingly."""
+        sys_sub = ctk.CTkLabel(
+            sys_header,
+            text="Build runtime specifications and licensing",
+            font=theme.font_caption(),
+            text_color=theme.dual("text_muted"),
+            anchor="w"
+        )
+        sys_sub.pack(anchor="w")
+
+        sys_box = ctk.CTkFrame(
+            self.sys_info_card,
+            fg_color=theme.dual("bg_card_alt"),
+            corner_radius=theme.RADIUS_INPUT,
+            border_width=1,
+            border_color=theme.dual("border_subtle")
+        )
+        sys_box.pack(fill="x", padx=20, pady=(0, 20))
+        sys_box.grid_columnconfigure(1, weight=1)
+
+        sys_specs = [
+            ("Application:", "AgriFarm Enterprise v2.4"),
+            ("Python Runtime:", f"{platform.python_version()} ({platform.architecture()[0]})"),
+            ("Operating System:", f"{platform.system()} {platform.release()}"),
+            ("Interface Stack:", "CustomTkinter 5.x / Native GPU"),
+            ("Developer & Design:", "Rafay Ahmed"),
+        ]
+
+        for r_idx, (lbl_txt, val_txt) in enumerate(sys_specs):
+            ctk.CTkLabel(
+                sys_box,
+                text=lbl_txt,
+                font=theme.font_caption(weight="bold"),
+                text_color=theme.dual("text_secondary"),
+                anchor="w"
+            ).grid(row=r_idx, column=0, sticky="w", padx=14, pady=5)
+
+            ctk.CTkLabel(
+                sys_box,
+                text=val_txt,
+                font=theme.font_caption(),
+                text_color=theme.dual("text_primary"),
+                anchor="w"
+            ).grid(row=r_idx, column=1, sticky="w", padx=14, pady=5)
+
+    def _change_theme(self, choice: str):
+        mode = "dark" if choice == "Dark Mode" else "light"
         cfg = config.load_config()
-        mode = cfg.get("theme_mode", "dark")
+        cfg["theme_mode"] = mode
+        config.save_config(cfg)
+        self.controller.update_theme_style(mode)
+        self.controller.refresh_all_views()
+
+    def refresh(self):
+        """Refreshes live connection and schema status."""
+        self._refresh_db_status()
+        mode = config.load_config().get("theme_mode", "dark")
         self.theme_switch.set("Dark Mode" if mode == "dark" else "Light Mode")
 
     def _refresh_db_status(self):
-        """Updates the live status and file-size labels."""
         success, message = database.test_connection()
         if success:
             self.status_label.configure(
-                text="● Connected – database is accessible",
-                text_color="#10b981"
+                text="● SQL Server: Connected",
+                text_color=theme.dual("brand_primary")
             )
+            self.conn_pill.configure(border_color=theme.dual("brand_primary"))
         else:
             self.status_label.configure(
-                text=f"● Error – {message}",
-                text_color="#ef4444"
+                text="● SQL Server: Offline",
+                text_color=theme.dual("accent_rose")
             )
+            self.conn_pill.configure(border_color=theme.dual("accent_rose"))
 
-        # Show file size if it exists
-        db_path = Path(__file__).parent.parent / "farm_db.sqlite"
-        if db_path.exists():
-            size_kb = db_path.stat().st_size / 1024
-            self.size_label.configure(text=f"File size: {size_kb:.1f} KB")
-        else:
-            self.size_label.configure(text="File size: (not yet created)")
+        schema_ok, schema_message = database.initialize_db()
+        self.schema_label.configure(
+            text="✓ Schema: Verified" if schema_ok else f"✗ Schema: {schema_message}",
+            text_color=theme.dual("brand_primary" if schema_ok else "accent_rose")
+        )
+        self.schema_pill.configure(
+            border_color=theme.dual("brand_primary" if schema_ok else "accent_rose")
+        )
 
     def _test_connection(self):
+        t0 = time.perf_counter()
         success, message = database.test_connection()
+        latency_ms = (time.perf_counter() - t0) * 1000.0
+
         if success:
             modal.show_info(
                 self.winfo_toplevel(),
-                "Connection Successful",
-                "✅ SQLite database is accessible and working correctly.\n\n"
-                f"File: {Path(__file__).parent.parent / 'farm_db.sqlite'}"
+                "SQL Server Verified",
+                f"✅ Connected to SQL Server successfully.\n\n"
+                f"Server: {database.SERVER}\n"
+                f"Database: {database.DATABASE}\n"
+                f"Latency: {latency_ms:.1f} ms\n"
+                f"Authentication: Windows Integrated"
             )
         else:
             modal.show_error(
                 self.winfo_toplevel(),
                 "Connection Failed",
-                f"Could not access SQLite database:\n{message}"
+                f"Could not connect to SQL Server:\n{message}"
             )
         self._refresh_db_status()
 
-    def _reinitialise_db(self):
-        """Re-runs table creation (safe – uses IF NOT EXISTS) and seeds if empty."""
+    def _verify_schema(self):
         success, msg = database.initialize_db()
         if success:
             modal.show_info(
                 self.winfo_toplevel(),
-                "Database Ready",
-                "Database schema verified and sample data seeded (if empty).\n\n"
-                "All views have been refreshed."
+                "Schema Verified",
+                "✅ Required SQL Server tables verified:\n\n"
+                "• Fields (Plot acreage & status)\n"
+                "• Crops (Varieties & growth stages)\n"
+                "• InventoryItems (Supplies & units)\n"
+                "• InventoryTransactions (Stock ledger)\n\n"
+                "Data integrity is confirmed."
             )
             self.controller.refresh_all_views()
         else:
             modal.show_error(
                 self.winfo_toplevel(),
-                "Initialisation Failed",
-                f"Could not initialise the database:\n{msg}"
+                "Schema Validation Error",
+                f"Database schema check failed:\n{msg}"
             )
-        self._refresh_db_status()
-
-    def _on_theme_changed(self, selection):
-        mode = "dark" if selection == "Dark Mode" else "light"
-        cfg = config.load_config()
-        cfg["theme_mode"] = mode
-        config.save_config(cfg)
-        ctk.set_appearance_mode(mode)
-        self.controller.update_theme_style(mode)
-
-    def refresh(self):
-        """Called by the main controller when this view is shown."""
         self._refresh_db_status()

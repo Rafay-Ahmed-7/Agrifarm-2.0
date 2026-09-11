@@ -1,2 +1,11 @@
 2026-06-05 00:46:40 - ERROR - crop_manager - get_dashboard_metrics error: no such table: fields
 2026-06-05 00:46:40 - ERROR - crop_manager - get_upcoming_activities error: no such table: crops
+2026-09-09 19:46:53,035 - ERROR - agrifarm - Failed to adjust inventory stock: unsupported operand type(s) for +: 'decimal.Decimal' and 'float'
+2026-09-09 19:46:59,138 - ERROR - agrifarm - Failed to adjust inventory stock: unsupported operand type(s) for +: 'decimal.Decimal' and 'float'
+2026-09-09 19:47:08,740 - ERROR - agrifarm - Failed to adjust inventory stock: unsupported operand type(s) for +: 'decimal.Decimal' and 'float'
+2026-09-09 19:47:15,981 - ERROR - agrifarm - Failed to adjust inventory stock: unsupported operand type(s) for +: 'decimal.Decimal' and 'float'
+2026-09-09 19:47:22,203 - ERROR - agrifarm - Failed to adjust inventory stock: unsupported operand type(s) for +: 'decimal.Decimal' and 'float'
+2026-09-09 19:47:26,485 - ERROR - agrifarm - Failed to adjust inventory stock: unsupported operand type(s) for +: 'decimal.Decimal' and 'float'
+2026-09-09 19:47:40,922 - ERROR - agrifarm - Failed to adjust inventory stock: unsupported operand type(s) for +: 'decimal.Decimal' and 'float'
+2026-09-09 19:47:55,844 - ERROR - agrifarm - Failed to adjust inventory stock: unsupported operand type(s) for +: 'decimal.Decimal' and 'float'
+2026-09-09 19:50:57,218 - ERROR - agrifarm - Failed to adjust inventory stock: unsupported operand type(s) for +: 'decimal.Decimal' and 'float'
