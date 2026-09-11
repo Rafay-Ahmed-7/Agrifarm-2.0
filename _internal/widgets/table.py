@@ -277,7 +277,7 @@ class CustomTable(ctk.CTkFrame):
                 is_low_inventory = self._is_low_stock(row_data, col_idx)
 
                 col_key = self.key_mapping[col_idx] if self.key_mapping and col_idx < len(self.key_mapping) else ""
-                is_badge = bool(badge_spec and col_key in ("stage", "status", "category", "Current Stage", "Stage", "Status", "Category"))
+                is_badge = bool(badge_spec and col_key in ("stage", "status", "category", "action", "action_type", "Current Stage", "Stage", "Status", "Category", "Action", "Action Type"))
 
                 padx = (14, 4) if col_idx == 0 else (4, 4)
                 cell = cells[col_idx]

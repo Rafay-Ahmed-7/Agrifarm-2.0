@@ -76,6 +76,7 @@ def pre_warm() -> "concurrent.futures.Future":
             get_inventory()
             get_dashboard_metrics()
             get_upcoming_activities(30)
+            get_activity_logs()
         except Exception:
             pass
     return _executor.submit(_run)
@@ -95,10 +96,24 @@ def test_connection():
 
 
 def initialize_db():
-    """Verify the already-applied schema without dropping or seeding data."""
+    """Verify the already-applied schema and ensure ActivityLogs exists."""
     required = {"Fields", "Crops", "InventoryItems", "InventoryTransactions"}
     try:
         conn = _connection()
+        # Ensure ActivityLogs table exists
+        conn.execute(
+            "IF OBJECT_ID(N'dbo.ActivityLogs', N'U') IS NULL "
+            "CREATE TABLE dbo.ActivityLogs ("
+            "  [LogId] bigint IDENTITY(1,1) NOT NULL PRIMARY KEY,"
+            "  [ActionType] nvarchar(50) NOT NULL,"
+            "  [EntityType] nvarchar(50) NOT NULL,"
+            "  [EntityName] nvarchar(200) NOT NULL,"
+            "  [Details] nvarchar(500) NULL,"
+            "  [PerformedAt] datetime2(0) NOT NULL CONSTRAINT DF_ActivityLogs_PerformedAt DEFAULT SYSUTCDATETIME()"
+            ");"
+        )
+        conn.commit()
+
         rows = conn.execute(
             "SELECT name FROM sys.tables WHERE schema_id = SCHEMA_ID('dbo')"
         ).fetchall()
@@ -107,6 +122,54 @@ def initialize_db():
         if missing:
             return _result(False, f"Missing SQL Server tables: {sorted(missing)}")
         return _result(True, "SQL Server schema verified")
+    except Exception as exc:
+        return _result(False, str(exc))
+
+
+def record_log(conn, action_type: str, entity_type: str, entity_name: str, details: str | None = None):
+    """Internal helper to insert an activity log within an existing transaction or connection."""
+    try:
+        conn.execute(
+            "INSERT INTO dbo.ActivityLogs (ActionType, EntityType, EntityName, Details) VALUES (?, ?, ?, ?)",
+            action_type, entity_type, entity_name, details
+        )
+    except Exception:
+        pass
+
+
+def get_activity_logs(limit: int = 150):
+    """Fetches chronological activity logs with formatted timestamps."""
+    cache_key = f"activity_logs_{limit}"
+    with _lock:
+        if cache_key in _cache:
+            return list(_cache[cache_key])
+        try:
+            conn = _connection()
+            rows = conn.execute(
+                "SELECT LogId AS id, ActionType AS action_type, EntityType AS entity_type, "
+                "EntityName AS entity_name, Details AS details, "
+                "CONVERT(varchar(19), PerformedAt, 120) AS performed_at "
+                "FROM dbo.ActivityLogs ORDER BY LogId DESC"
+            ).fetchmany(limit)
+            keys = ("id", "action_type", "entity_type", "entity_name", "details", "performed_at")
+            result = [dict(zip(keys, row)) for row in rows]
+            _cache[cache_key] = result
+            return list(result)
+        except Exception:
+            return []
+
+
+def clear_activity_logs():
+    """Clears all activity logs."""
+    try:
+        with _lock:
+            conn = _connection()
+            conn.execute("TRUNCATE TABLE dbo.ActivityLogs")
+            conn.commit()
+            invalidate_cache()
+            record_log(conn, "System Init", "System", "Activity Logs", "Log history cleared by operator")
+            conn.commit()
+        return _result(True, "Activity logs cleared")
     except Exception as exc:
         return _result(False, str(exc))
 
@@ -152,6 +215,7 @@ def add_field(name, area_acres, soil_type, status):
                 "INSERT dbo.Fields (Name, AreaAcres, SoilType, Status) VALUES (?, ?, ?, ?)",
                 name, area_acres, soil_type or None, status,
             )
+            record_log(conn, "Register Field", "Field", name, f"Registered {area_acres} acres ({status}, {soil_type or 'Default'})")
             conn.commit()
             invalidate_cache()
         return _result(True, "Field added")
@@ -168,6 +232,7 @@ def update_field(field_id, name, area_acres, soil_type, status):
                 "WHERE FieldId=? AND IsArchived=0",
                 name, area_acres, soil_type or None, status, field_id,
             )
+            record_log(conn, "Update Field", "Field", name, f"Updated to {area_acres} acres, status: {status}")
             conn.commit()
             invalidate_cache()
         return _result(True, "Field updated")
@@ -179,8 +244,11 @@ def delete_field(field_id):
     try:
         with _lock:
             conn = _connection()
+            row = conn.execute("SELECT Name FROM dbo.Fields WHERE FieldId=?", field_id).fetchone()
+            field_name = row[0] if row else f"Field #{field_id}"
             conn.execute("DELETE FROM dbo.Crops WHERE FieldId=?", field_id)
             conn.execute("DELETE FROM dbo.Fields WHERE FieldId=?", field_id)
+            record_log(conn, "Delete Field", "Field", field_name, "Field and associated crops deleted")
             conn.commit()
             invalidate_cache()
         return _result(True, "Field and its crops deleted")
@@ -197,6 +265,8 @@ def add_crop(field_id, name, variety, planting_date, expected_harvest, stage):
                 "VALUES (?, ?, ?, ?, ?, ?)",
                 field_id, name, variety or None, planting_date, expected_harvest or None, stage,
             )
+            detail = f"Planted {name} ({variety or 'Standard'}) - Stage: {stage}"
+            record_log(conn, "Plant Crop", "Crop", name, detail)
             conn.commit()
             invalidate_cache()
         return _result(True, "Crop added")
@@ -213,6 +283,8 @@ def update_crop(crop_id, field_id, name, variety, planting_date, expected_harves
                 "GrowthStage=?, UpdatedAt=SYSUTCDATETIME() WHERE CropId=? AND IsArchived=0",
                 field_id, name, variety or None, planting_date, expected_harvest or None, stage, crop_id,
             )
+            detail = f"Updated {name} to stage: {stage}"
+            record_log(conn, "Update Crop", "Crop", name, detail)
             conn.commit()
             invalidate_cache()
         return _result(True, "Crop updated")
@@ -224,7 +296,10 @@ def delete_crop(crop_id):
     try:
         with _lock:
             conn = _connection()
+            row = conn.execute("SELECT Name FROM dbo.Crops WHERE CropId=?", crop_id).fetchone()
+            crop_name = row[0] if row else f"Crop #{crop_id}"
             conn.execute("DELETE FROM dbo.Crops WHERE CropId=?", crop_id)
+            record_log(conn, "Delete Crop", "Crop", crop_name, "Crop record removed")
             conn.commit()
             invalidate_cache()
         return _result(True, "Crop deleted")
@@ -266,6 +341,7 @@ def add_inventory_item(item_name, category, quantity, unit):
                     "VALUES (?, 'Opening', ?, 'Initial application entry')",
                     item_id, quantity,
                 )
+            record_log(conn, "Register Item", "Inventory", item_name, f"Registered under {category} with initial stock {quantity} {unit}")
             conn.commit()
             invalidate_cache()
         return _result(True, "Inventory item added")
@@ -283,6 +359,9 @@ def adjust_inventory_stock(item_id, adjustment):
             return _result(False, "Adjustment must be greater than zero")
         with _lock:
             conn = _connection()
+            item_row = conn.execute("SELECT ItemName, Unit FROM dbo.InventoryItems WHERE InventoryItemId=?", item_id).fetchone()
+            item_name = item_row[0] if item_row else f"Item #{item_id}"
+            unit = item_row[1] if item_row else ""
             current = conn.execute(
                 "SELECT COALESCE(SUM(CASE WHEN TransactionType IN ('Opening','In','Adjustment') THEN Quantity "
                 "WHEN TransactionType='Out' THEN -Quantity ELSE 0 END), 0) "
@@ -299,6 +378,8 @@ def adjust_inventory_stock(item_id, adjustment):
                 item_id, kind, abs(adjustment),
             )
             conn.execute("UPDATE dbo.InventoryItems SET UpdatedAt=SYSUTCDATETIME() WHERE InventoryItemId=?", item_id)
+            sign = "+" if adjustment > 0 else ""
+            record_log(conn, "Stock Adjustment", "Inventory", item_name, f"Stock adjusted by {sign}{adjustment} {unit}")
             conn.commit()
             invalidate_cache()
         return _result(True, "Inventory adjusted")
@@ -310,8 +391,11 @@ def delete_inventory_item(item_id):
     try:
         with _lock:
             conn = _connection()
+            row = conn.execute("SELECT ItemName FROM dbo.InventoryItems WHERE InventoryItemId=?", item_id).fetchone()
+            item_name = row[0] if row else f"Item #{item_id}"
             conn.execute("DELETE FROM dbo.InventoryTransactions WHERE InventoryItemId=?", item_id)
             conn.execute("DELETE FROM dbo.InventoryItems WHERE InventoryItemId=?", item_id)
+            record_log(conn, "Delete Item", "Inventory", item_name, "Inventory item removed")
             conn.commit()
             invalidate_cache()
         return _result(True, "Inventory item deleted")

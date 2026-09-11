@@ -11,6 +11,7 @@ import customtkinter as ctk
 import config
 import database
 import theme
+from views.activity_logs import ActivityLogsView
 from views.crop_tracker import CropTrackerView
 from views.dashboard import DashboardView
 from views.inventory import InventoryView
@@ -72,6 +73,7 @@ class AgriFarmApp(ctk.CTk):
             "Dashboard": lambda: DashboardView(self.content, self),
             "Crop Tracker": lambda: CropTrackerView(self.content, self),
             "Inventory": lambda: InventoryView(self.content, self),
+            "Activity Logs": lambda: ActivityLogsView(self.content, self),
             "Settings": lambda: SettingsView(self.content, self),
         }
         self.views = {}
@@ -156,7 +158,8 @@ class AgriFarmApp(ctk.CTk):
             (2, "Dashboard", "📊"),
             (3, "Crop Tracker", "🌱"),
             (4, "Inventory", "📦"),
-            (5, "Settings", "⚙️"),
+            (5, "Activity Logs", "📋"),
+            (6, "Settings", "⚙️"),
         ]
 
         for row, name, icon in nav_items:
@@ -320,7 +323,7 @@ class AgriFarmApp(ctk.CTk):
         except Exception:
             pass
 
-        for name in ["Crop Tracker", "Inventory", "Settings"]:
+        for name in ["Crop Tracker", "Inventory", "Activity Logs", "Settings"]:
             if name not in self.views:
                 try:
                     view = self.view_factories[name]()
@@ -360,6 +363,7 @@ class AgriFarmApp(ctk.CTk):
             "Dashboard": ("Farm Dashboard", "Operational metrics, active harvests, and field health"),
             "Crop Tracker": ("Crop & Field Tracker", "Manage farm plots, planting schedules, and crop life-cycles"),
             "Inventory": ("Stock & Resource Inventory", "Monitor supplies, adjust stock levels, and track consumption"),
+            "Activity Logs": ("Activity & Operations Audit Trail", "Real-time ledger of system actions, modifications, and audit logs"),
             "Settings": ("System & Database Diagnostics", "SQL Server connection telemetry and application customization"),
         }
         title, subtitle = context_map.get(name, (name, ""))

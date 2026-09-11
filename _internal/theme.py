@@ -197,6 +197,58 @@ BADGES = {
         "light": {"bg": "#F1F5F9", "fg": "#334155", "border": "#CBD5E1"},
         "icon": "🔧",
     },
+
+    # Activity Log Action Types
+    "Register Field": {
+        "dark": {"bg": "#064E3B", "fg": "#34D399", "border": "#059669"},
+        "light": {"bg": "#D1FAE5", "fg": "#065F46", "border": "#A7F3D0"},
+        "icon": "🚜",
+    },
+    "Update Field": {
+        "dark": {"bg": "#082F49", "fg": "#38BDF8", "border": "#0284C7"},
+        "light": {"bg": "#E0F2FE", "fg": "#0369A1", "border": "#7DD3FC"},
+        "icon": "✏️",
+    },
+    "Delete Field": {
+        "dark": {"bg": "#450A0A", "fg": "#F87171", "border": "#DC2626"},
+        "light": {"bg": "#FEE2E2", "fg": "#991B1B", "border": "#FCA5A5"},
+        "icon": "🗑️",
+    },
+    "Plant Crop": {
+        "dark": {"bg": "#064E3B", "fg": "#86EFAC", "border": "#15803D"},
+        "light": {"bg": "#DCFCE7", "fg": "#166534", "border": "#BBF7D0"},
+        "icon": "🌱",
+    },
+    "Update Crop": {
+        "dark": {"bg": "#082F49", "fg": "#38BDF8", "border": "#0284C7"},
+        "light": {"bg": "#E0F2FE", "fg": "#0369A1", "border": "#7DD3FC"},
+        "icon": "🔄",
+    },
+    "Delete Crop": {
+        "dark": {"bg": "#450A0A", "fg": "#F87171", "border": "#DC2626"},
+        "light": {"bg": "#FEE2E2", "fg": "#991B1B", "border": "#FCA5A5"},
+        "icon": "🗑️",
+    },
+    "Register Item": {
+        "dark": {"bg": "#1E1B4B", "fg": "#A5B4FC", "border": "#6366F1"},
+        "light": {"bg": "#EEF2FF", "fg": "#4338CA", "border": "#C7D2FE"},
+        "icon": "📦",
+    },
+    "Stock Adjustment": {
+        "dark": {"bg": "#451A03", "fg": "#FBBF24", "border": "#D97706"},
+        "light": {"bg": "#FEF3C7", "fg": "#92400E", "border": "#FDE68A"},
+        "icon": "⚖️",
+    },
+    "Delete Item": {
+        "dark": {"bg": "#450A0A", "fg": "#F87171", "border": "#DC2626"},
+        "light": {"bg": "#FEE2E2", "fg": "#991B1B", "border": "#FCA5A5"},
+        "icon": "🗑️",
+    },
+    "System Init": {
+        "dark": {"bg": "#1E293B", "fg": "#94A3B8", "border": "#475569"},
+        "light": {"bg": "#F1F5F9", "fg": "#475569", "border": "#CBD5E1"},
+        "icon": "⚙️",
+    },
 }
 
 

@@ -1,3 +1,10 @@
+-- ============================================================
+--  AgriFarm Database Export
+--  Generated : 2026-09-11 23:00:35
+--  Source    : IT-Tauheed / AgriFarm
+--  Usage     : Run this entire script in SSMS on any SQL Server.
+-- ============================================================
+
 IF DB_ID(N'AgriFarm') IS NULL
     CREATE DATABASE AgriFarm;
 GO
@@ -6,6 +13,7 @@ USE [AgriFarm];
 GO
 
 -- Drop existing tables in reverse dependency order
+IF OBJECT_ID(N'dbo.ActivityLogs', N'U') IS NOT NULL DROP TABLE dbo.[ActivityLogs];
 IF OBJECT_ID(N'dbo.InventoryTransactions', N'U') IS NOT NULL DROP TABLE dbo.[InventoryTransactions];
 IF OBJECT_ID(N'dbo.Crops', N'U') IS NOT NULL DROP TABLE dbo.[Crops];
 IF OBJECT_ID(N'dbo.InventoryItems', N'U') IS NOT NULL DROP TABLE dbo.[InventoryItems];
@@ -102,12 +110,27 @@ CREATE TABLE dbo.[SchemaMigrations] (
 );
 GO
 
+-- ============================================================
+-- Table: dbo.ActivityLogs
+-- ============================================================
+
+CREATE TABLE dbo.[ActivityLogs] (
+    [LogId] bigint IDENTITY(1,1) NOT NULL,
+    [ActionType] nvarchar(50) NOT NULL,
+    [EntityType] nvarchar(50) NOT NULL,
+    [EntityName] nvarchar(200) NOT NULL,
+    [Details] nvarchar(500) NULL,
+    [PerformedAt] datetime2(0) NOT NULL,
+    CONSTRAINT [PK_ActivityLogs] PRIMARY KEY ([LogId])
+);
+GO
+
 
 -- ============================================================
 -- DATA
 -- ============================================================
 
--- Fields: 7 rows
+-- Fields: 8 rows
 SET IDENTITY_INSERT dbo.[Fields] ON;
 INSERT INTO dbo.[Fields] ([FieldId], [Name], [AreaAcres], [SoilType], [Status], [CreatedAt], [UpdatedAt], [IsArchived]) VALUES (1, N'North Meadow', 12.50, N'Clay Loam', N'Active', '2026-09-09 14:37:33', '2026-09-09 14:37:33', 0);
 INSERT INTO dbo.[Fields] ([FieldId], [Name], [AreaAcres], [SoilType], [Status], [CreatedAt], [UpdatedAt], [IsArchived]) VALUES (3, N'East Field', 15.00, N'Silt Loam', N'Fallow', '2026-09-09 14:37:33', '2026-09-11 14:28:20', 0);
@@ -116,9 +139,10 @@ INSERT INTO dbo.[Fields] ([FieldId], [Name], [AreaAcres], [SoilType], [Status], 
 INSERT INTO dbo.[Fields] ([FieldId], [Name], [AreaAcres], [SoilType], [Status], [CreatedAt], [UpdatedAt], [IsArchived]) VALUES (17, N'West Paddock', 20.00, N'Clay', N'Resting', '2026-09-09 17:43:30', '2026-09-11 14:28:45', 0);
 INSERT INTO dbo.[Fields] ([FieldId], [Name], [AreaAcres], [SoilType], [Status], [CreatedAt], [UpdatedAt], [IsArchived]) VALUES (18, N'River Bend', 11.25, N'Alluvial', N'Active', '2026-09-09 17:43:30', '2026-09-09 17:43:30', 0);
 INSERT INTO dbo.[Fields] ([FieldId], [Name], [AreaAcres], [SoilType], [Status], [CreatedAt], [UpdatedAt], [IsArchived]) VALUES (19, N'Greenhouse A', 1.50, N'Peat Mix', N'Active', '2026-09-09 17:43:30', '2026-09-09 17:43:30', 0);
+INSERT INTO dbo.[Fields] ([FieldId], [Name], [AreaAcres], [SoilType], [Status], [CreatedAt], [UpdatedAt], [IsArchived]) VALUES (24, N'Test', 123.00, N'test', N'Active', '2026-09-11 16:54:29', '2026-09-11 16:54:29', 0);
 SET IDENTITY_INSERT dbo.[Fields] OFF;
 
--- Crops: 16 rows
+-- Crops: 17 rows
 SET IDENTITY_INSERT dbo.[Crops] ON;
 INSERT INTO dbo.[Crops] ([CropId], [FieldId], [Name], [Variety], [PlantingDate], [ExpectedHarvestDate], [GrowthStage], [CreatedAt], [UpdatedAt], [IsArchived]) VALUES (3, 7, N'Rice', N'Basmati', '2026-09-09', '2027-01-02', N'Seedling', '2026-09-09 14:45:39', '2026-09-09 14:46:04', 0);
 INSERT INTO dbo.[Crops] ([CropId], [FieldId], [Name], [Variety], [PlantingDate], [ExpectedHarvestDate], [GrowthStage], [CreatedAt], [UpdatedAt], [IsArchived]) VALUES (6, 1, N'Corn', N'Sweet Yellow', '2026-05-06', '2026-09-03', N'Vegetative', '2026-09-09 14:54:45', '2026-09-09 14:54:45', 0);
@@ -136,9 +160,10 @@ INSERT INTO dbo.[Crops] ([CropId], [FieldId], [Name], [Variety], [PlantingDate],
 INSERT INTO dbo.[Crops] ([CropId], [FieldId], [Name], [Variety], [PlantingDate], [ExpectedHarvestDate], [GrowthStage], [CreatedAt], [UpdatedAt], [IsArchived]) VALUES (32, 17, N'Cotton', N'Bt Cotton Hybrid', '2026-07-11', '2026-11-03', N'Flowering', '2026-09-09 17:44:22', '2026-09-09 17:44:22', 0);
 INSERT INTO dbo.[Crops] ([CropId], [FieldId], [Name], [Variety], [PlantingDate], [ExpectedHarvestDate], [GrowthStage], [CreatedAt], [UpdatedAt], [IsArchived]) VALUES (33, 16, N'Sugarcane', N'Co 238', '2026-03-13', '2026-12-08', N'Vegetative', '2026-09-09 17:44:22', '2026-09-09 17:44:22', 0);
 INSERT INTO dbo.[Crops] ([CropId], [FieldId], [Name], [Variety], [PlantingDate], [ExpectedHarvestDate], [GrowthStage], [CreatedAt], [UpdatedAt], [IsArchived]) VALUES (34, 16, N'Mango', N'Chaunsa', '2025-09-09', '2026-09-29', N'Harvest-Ready', '2026-09-09 17:44:22', '2026-09-09 17:44:22', 0);
+INSERT INTO dbo.[Crops] ([CropId], [FieldId], [Name], [Variety], [PlantingDate], [ExpectedHarvestDate], [GrowthStage], [CreatedAt], [UpdatedAt], [IsArchived]) VALUES (36, 24, N'test12', N'test123', '2026-09-11', '2026-10-05', N'Seedling', '2026-09-11 16:54:57', '2026-09-11 16:55:18', 0);
 SET IDENTITY_INSERT dbo.[Crops] OFF;
 
--- InventoryItems: 29 rows
+-- InventoryItems: 30 rows
 SET IDENTITY_INSERT dbo.[InventoryItems] ON;
 INSERT INTO dbo.[InventoryItems] ([InventoryItemId], [ItemName], [Category], [Unit], [ReorderLevel], [CreatedAt], [UpdatedAt], [IsArchived]) VALUES (1, N'Organic Nitrogen Fertilizer', N'Fertilizer', N'kg', 10.000, '2026-09-09 14:37:33', '2026-06-04 19:46:41', 0);
 INSERT INTO dbo.[InventoryItems] ([InventoryItemId], [ItemName], [Category], [Unit], [ReorderLevel], [CreatedAt], [UpdatedAt], [IsArchived]) VALUES (2, N'Tomato Hybrid Seeds', N'Seeds', N'kg', 10.000, '2026-09-09 14:37:33', '2026-06-04 19:46:41', 0);
@@ -159,7 +184,7 @@ INSERT INTO dbo.[InventoryItems] ([InventoryItemId], [ItemName], [Category], [Un
 INSERT INTO dbo.[InventoryItems] ([InventoryItemId], [ItemName], [Category], [Unit], [ReorderLevel], [CreatedAt], [UpdatedAt], [IsArchived]) VALUES (22, N'Glyphosate Herbicide', N'Pesticide', N'liters', 10.000, '2026-09-09 17:43:30', '2026-09-09 17:43:30', 0);
 INSERT INTO dbo.[InventoryItems] ([InventoryItemId], [ItemName], [Category], [Unit], [ReorderLevel], [CreatedAt], [UpdatedAt], [IsArchived]) VALUES (23, N'Chlorpyrifos EC', N'Pesticide', N'liters', 10.000, '2026-09-09 17:43:30', '2026-09-09 17:43:30', 0);
 INSERT INTO dbo.[InventoryItems] ([InventoryItemId], [ItemName], [Category], [Unit], [ReorderLevel], [CreatedAt], [UpdatedAt], [IsArchived]) VALUES (24, N'Copper Oxychloride', N'Pesticide', N'kg', 10.000, '2026-09-09 17:43:30', '2026-09-09 17:43:30', 0);
-INSERT INTO dbo.[InventoryItems] ([InventoryItemId], [ItemName], [Category], [Unit], [ReorderLevel], [CreatedAt], [UpdatedAt], [IsArchived]) VALUES (25, N'Mancozeb WP', N'Pesticide', N'kg', 10.000, '2026-09-09 17:43:30', '2026-09-11 14:29:45', 0);
+INSERT INTO dbo.[InventoryItems] ([InventoryItemId], [ItemName], [Category], [Unit], [ReorderLevel], [CreatedAt], [UpdatedAt], [IsArchived]) VALUES (25, N'Mancozeb WP', N'Pesticide', N'kg', 10.000, '2026-09-09 17:43:30', '2026-09-11 17:52:20', 0);
 INSERT INTO dbo.[InventoryItems] ([InventoryItemId], [ItemName], [Category], [Unit], [ReorderLevel], [CreatedAt], [UpdatedAt], [IsArchived]) VALUES (26, N'Knapsack Sprayer 16L', N'Tools', N'units', 10.000, '2026-09-09 17:43:30', '2026-09-09 17:43:30', 0);
 INSERT INTO dbo.[InventoryItems] ([InventoryItemId], [ItemName], [Category], [Unit], [ReorderLevel], [CreatedAt], [UpdatedAt], [IsArchived]) VALUES (27, N'Shovel & Spade Set', N'Tools', N'units', 10.000, '2026-09-09 17:43:30', '2026-09-09 17:43:30', 0);
 INSERT INTO dbo.[InventoryItems] ([InventoryItemId], [ItemName], [Category], [Unit], [ReorderLevel], [CreatedAt], [UpdatedAt], [IsArchived]) VALUES (28, N'Irrigation Pipe 50m', N'Tools', N'units', 10.000, '2026-09-09 17:43:30', '2026-09-09 17:43:30', 0);
@@ -169,9 +194,10 @@ INSERT INTO dbo.[InventoryItems] ([InventoryItemId], [ItemName], [Category], [Un
 INSERT INTO dbo.[InventoryItems] ([InventoryItemId], [ItemName], [Category], [Unit], [ReorderLevel], [CreatedAt], [UpdatedAt], [IsArchived]) VALUES (36, N'Diesel Fuel (20L Jerrycan)', N'Tools', N'liters', 10.000, '2026-09-09 17:44:22', '2026-09-09 17:44:22', 0);
 INSERT INTO dbo.[InventoryItems] ([InventoryItemId], [ItemName], [Category], [Unit], [ReorderLevel], [CreatedAt], [UpdatedAt], [IsArchived]) VALUES (37, N'Engine Oil 20W-50', N'Tools', N'liters', 10.000, '2026-09-09 17:44:22', '2026-09-09 17:44:22', 0);
 INSERT INTO dbo.[InventoryItems] ([InventoryItemId], [ItemName], [Category], [Unit], [ReorderLevel], [CreatedAt], [UpdatedAt], [IsArchived]) VALUES (39, N'Jute Harvest Sacks', N'Tools', N'units', 10.000, '2026-09-09 17:44:22', '2026-09-09 17:44:22', 0);
+INSERT INTO dbo.[InventoryItems] ([InventoryItemId], [ItemName], [Category], [Unit], [ReorderLevel], [CreatedAt], [UpdatedAt], [IsArchived]) VALUES (41, N'Test123', N'Seeds', N'kg', 10.000, '2026-09-11 16:55:55', '2026-09-11 16:56:17', 0);
 SET IDENTITY_INSERT dbo.[InventoryItems] OFF;
 
--- InventoryTransactions: 35 rows
+-- InventoryTransactions: 39 rows
 SET IDENTITY_INSERT dbo.[InventoryTransactions] ON;
 INSERT INTO dbo.[InventoryTransactions] ([InventoryTransactionId], [InventoryItemId], [TransactionType], [Quantity], [TransactionDate], [Notes]) VALUES (1, 1, N'Opening', 45.000, '2026-09-09 14:37:33', N'Migrated from SQLite farm_db.sqlite');
 INSERT INTO dbo.[InventoryTransactions] ([InventoryTransactionId], [InventoryItemId], [TransactionType], [Quantity], [TransactionDate], [Notes]) VALUES (2, 2, N'Opening', 5.000, '2026-09-09 14:37:33', N'Migrated from SQLite farm_db.sqlite');
@@ -208,83 +234,23 @@ INSERT INTO dbo.[InventoryTransactions] ([InventoryTransactionId], [InventoryIte
 INSERT INTO dbo.[InventoryTransactions] ([InventoryTransactionId], [InventoryItemId], [TransactionType], [Quantity], [TransactionDate], [Notes]) VALUES (48, 39, N'Opening', 200.000, '2026-09-09 17:44:22', N'Initial application entry');
 INSERT INTO dbo.[InventoryTransactions] ([InventoryTransactionId], [InventoryItemId], [TransactionType], [Quantity], [TransactionDate], [Notes]) VALUES (51, 25, N'Out', 9.000, '2026-09-11 14:29:39', N'Quick stock adjustment');
 INSERT INTO dbo.[InventoryTransactions] ([InventoryTransactionId], [InventoryItemId], [TransactionType], [Quantity], [TransactionDate], [Notes]) VALUES (52, 25, N'In', 10.000, '2026-09-11 14:29:45', N'Quick stock adjustment');
+INSERT INTO dbo.[InventoryTransactions] ([InventoryTransactionId], [InventoryItemId], [TransactionType], [Quantity], [TransactionDate], [Notes]) VALUES (53, 41, N'Opening', 123.000, '2026-09-11 16:55:55', N'Initial application entry');
+INSERT INTO dbo.[InventoryTransactions] ([InventoryTransactionId], [InventoryItemId], [TransactionType], [Quantity], [TransactionDate], [Notes]) VALUES (54, 41, N'In', 123.000, '2026-09-11 16:56:12', N'Quick stock adjustment');
+INSERT INTO dbo.[InventoryTransactions] ([InventoryTransactionId], [InventoryItemId], [TransactionType], [Quantity], [TransactionDate], [Notes]) VALUES (55, 41, N'Out', 123.000, '2026-09-11 16:56:17', N'Quick stock adjustment');
+INSERT INTO dbo.[InventoryTransactions] ([InventoryTransactionId], [InventoryItemId], [TransactionType], [Quantity], [TransactionDate], [Notes]) VALUES (56, 25, N'In', 50.000, '2026-09-11 17:52:20', N'Quick stock adjustment');
 SET IDENTITY_INSERT dbo.[InventoryTransactions] OFF;
 
 -- SchemaMigrations: 1 rows
 INSERT INTO dbo.[SchemaMigrations] ([MigrationId], [AppliedAt]) VALUES (N'001_initial_sql_server_schema', '2026-09-08 18:20:36');
 
--- 1. View all Fields (Land plots, area in acres, soil type, and status)
-SELECT * FROM dbo.Fields;
-
--- 2. View all Crops (Planting date, harvest date, growth stage, linked FieldId)
-SELECT * FROM dbo.Crops;
-
--- 3. View all Inventory Items (Name, Category, Unit, Reorder Level)
-SELECT * FROM dbo.InventoryItems;
-
--- 4. View all Inventory Transactions (Stock In/Out ledger records with timestamps)
-SELECT * FROM dbo.InventoryTransactions;
-
--- 5. View Database Migration History
-SELECT * FROM dbo.SchemaMigrations;
-
-SELECT 
-    c.CropId,
-    c.Name AS CropName,
-    c.Variety,
-    c.GrowthStage,
-    c.PlantingDate,
-    c.ExpectedHarvestDate,
-    f.Name AS FieldName,
-    f.AreaAcres,
-    f.SoilType
-FROM dbo.Crops c
-INNER JOIN dbo.Fields f ON c.FieldId = f.FieldId
-WHERE c.IsArchived = 0
-ORDER BY c.PlantingDate DESC;
-
-USE [AgriFarm];
-GO
-
-SELECT 
-    i.InventoryItemId,
-    i.ItemName,
-    i.Category,
-    i.Unit,
-    i.ReorderLevel,
-    COALESCE(SUM(CASE 
-        WHEN t.TransactionType IN ('In', 'Opening') THEN t.Quantity
-        WHEN t.TransactionType = 'Out' THEN -t.Quantity
-        ELSE 0 
-    END), 0) AS CurrentStock,
-    CASE 
-        WHEN COALESCE(SUM(CASE 
-            WHEN t.TransactionType IN ('In', 'Opening') THEN t.Quantity
-            WHEN t.TransactionType = 'Out' THEN -t.Quantity
-            ELSE 0 
-        END), 0) <= i.ReorderLevel THEN 'REORDER NEEDED'
-        ELSE 'Sufficient'
-    END AS StockStatus
-FROM dbo.InventoryItems i
-LEFT JOIN dbo.InventoryTransactions t ON i.InventoryItemId = t.InventoryItemId
-WHERE i.IsArchived = 0
-GROUP BY i.InventoryItemId, i.ItemName, i.Category, i.Unit, i.ReorderLevel
-ORDER BY i.Category, i.ItemName;
-
-USE [AgriFarm];
-GO
-
-SELECT 
-    f.FieldId,
-    f.Name AS FieldName,
-    f.AreaAcres,
-    f.Status AS FieldStatus,
-    COUNT(c.CropId) AS TotalCropsPlanted
-FROM dbo.Fields f
-LEFT JOIN dbo.Crops c ON f.FieldId = c.FieldId AND c.IsArchived = 0
-WHERE f.IsArchived = 0
-GROUP BY f.FieldId, f.Name, f.AreaAcres, f.Status
-ORDER BY f.AreaAcres DESC;
-
+-- ActivityLogs: 5 rows
+SET IDENTITY_INSERT dbo.[ActivityLogs] ON;
+INSERT INTO dbo.[ActivityLogs] ([LogId], [ActionType], [EntityType], [EntityName], [Details], [PerformedAt]) VALUES (1, N'System Init', N'System', N'AgriFarm Core', N'Enterprise database schema and tables initialized', '2026-09-11 17:57:27');
+INSERT INTO dbo.[ActivityLogs] ([LogId], [ActionType], [EntityType], [EntityName], [Details], [PerformedAt]) VALUES (2, N'Register Field', N'Field', N'North Meadow', N'Field registered with 12.50 acres (Clay Loam)', '2026-09-11 17:57:27');
+INSERT INTO dbo.[ActivityLogs] ([LogId], [ActionType], [EntityType], [EntityName], [Details], [PerformedAt]) VALUES (3, N'Plant Crop', N'Crop', N'Wheat (HD-2967)', N'Planted in West Paddock, expected harvest Nov 2026', '2026-09-11 17:57:27');
+INSERT INTO dbo.[ActivityLogs] ([LogId], [ActionType], [EntityType], [EntityName], [Details], [PerformedAt]) VALUES (4, N'Stock Adjustment', N'Inventory', N'DAP Fertilizer', N'Stock level increased by +50.00 kg', '2026-09-11 17:57:27');
+INSERT INTO dbo.[ActivityLogs] ([LogId], [ActionType], [EntityType], [EntityName], [Details], [PerformedAt]) VALUES (5, N'Register Field', N'Field', N'TubeWell Side', N'Field registered with 16.00 acres (Clay Loam)', '2026-09-11 17:57:27');
+SET IDENTITY_INSERT dbo.[ActivityLogs] OFF;
 
 GO
+-- AgriFarm export complete.
