@@ -1,10 +1,3 @@
--- ============================================================
---  AgriFarm Database Export
---  Generated : 2026-09-11 21:41:32
---  Source    : IT-Tauheed / AgriFarm
---  Usage     : Run this entire script in SSMS on any SQL Server.
--- ============================================================
-
 IF DB_ID(N'AgriFarm') IS NULL
     CREATE DATABASE AgriFarm;
 GO
@@ -220,5 +213,78 @@ SET IDENTITY_INSERT dbo.[InventoryTransactions] OFF;
 -- SchemaMigrations: 1 rows
 INSERT INTO dbo.[SchemaMigrations] ([MigrationId], [AppliedAt]) VALUES (N'001_initial_sql_server_schema', '2026-09-08 18:20:36');
 
+-- 1. View all Fields (Land plots, area in acres, soil type, and status)
+SELECT * FROM dbo.Fields;
+
+-- 2. View all Crops (Planting date, harvest date, growth stage, linked FieldId)
+SELECT * FROM dbo.Crops;
+
+-- 3. View all Inventory Items (Name, Category, Unit, Reorder Level)
+SELECT * FROM dbo.InventoryItems;
+
+-- 4. View all Inventory Transactions (Stock In/Out ledger records with timestamps)
+SELECT * FROM dbo.InventoryTransactions;
+
+-- 5. View Database Migration History
+SELECT * FROM dbo.SchemaMigrations;
+
+SELECT 
+    c.CropId,
+    c.Name AS CropName,
+    c.Variety,
+    c.GrowthStage,
+    c.PlantingDate,
+    c.ExpectedHarvestDate,
+    f.Name AS FieldName,
+    f.AreaAcres,
+    f.SoilType
+FROM dbo.Crops c
+INNER JOIN dbo.Fields f ON c.FieldId = f.FieldId
+WHERE c.IsArchived = 0
+ORDER BY c.PlantingDate DESC;
+
+USE [AgriFarm];
 GO
--- AgriFarm export complete.
+
+SELECT 
+    i.InventoryItemId,
+    i.ItemName,
+    i.Category,
+    i.Unit,
+    i.ReorderLevel,
+    COALESCE(SUM(CASE 
+        WHEN t.TransactionType IN ('In', 'Opening') THEN t.Quantity
+        WHEN t.TransactionType = 'Out' THEN -t.Quantity
+        ELSE 0 
+    END), 0) AS CurrentStock,
+    CASE 
+        WHEN COALESCE(SUM(CASE 
+            WHEN t.TransactionType IN ('In', 'Opening') THEN t.Quantity
+            WHEN t.TransactionType = 'Out' THEN -t.Quantity
+            ELSE 0 
+        END), 0) <= i.ReorderLevel THEN 'REORDER NEEDED'
+        ELSE 'Sufficient'
+    END AS StockStatus
+FROM dbo.InventoryItems i
+LEFT JOIN dbo.InventoryTransactions t ON i.InventoryItemId = t.InventoryItemId
+WHERE i.IsArchived = 0
+GROUP BY i.InventoryItemId, i.ItemName, i.Category, i.Unit, i.ReorderLevel
+ORDER BY i.Category, i.ItemName;
+
+USE [AgriFarm];
+GO
+
+SELECT 
+    f.FieldId,
+    f.Name AS FieldName,
+    f.AreaAcres,
+    f.Status AS FieldStatus,
+    COUNT(c.CropId) AS TotalCropsPlanted
+FROM dbo.Fields f
+LEFT JOIN dbo.Crops c ON f.FieldId = c.FieldId AND c.IsArchived = 0
+WHERE f.IsArchived = 0
+GROUP BY f.FieldId, f.Name, f.AreaAcres, f.Status
+ORDER BY f.AreaAcres DESC;
+
+
+GO
