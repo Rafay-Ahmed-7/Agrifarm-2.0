@@ -376,6 +376,8 @@ class CropTrackerView(ctk.CTkFrame):
             height=32,
             command=self._clear_crop_form
         )
+        self.btn_crop_clear.grid(row=0, column=3, padx=3, sticky="ew")
+
     def _on_field_search(self, event=None):
         if hasattr(self, "_f_search_timer") and self._f_search_timer:
             self.after_cancel(self._f_search_timer)
